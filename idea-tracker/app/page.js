@@ -34,7 +34,12 @@ export default function Home() {
     }
   }
 
-  const getTodayString = () => new Date().toISOString().split('T')[0]
+  const getTodayString = () => {
+    const now = new Date()
+    const istOffset = 5.5 * 60 * 60 * 1000
+    const istDate = new Date(now.getTime() + istOffset)
+    return istDate.toISOString().split('T')[0]
+  }
 
   const hasSubmittedToday = (person) => {
     const today = getTodayString()
