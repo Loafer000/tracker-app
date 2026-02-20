@@ -21,10 +21,15 @@ export default function Home() {
     try {
       const res = await fetch('/api/ideas')
       const data = await res.json()
-      setIdeas(data)
+      if (Array.isArray(data)) {
+        setIdeas(data)
+      } else {
+        setIdeas([])
+      }
       setLoading(false)
     } catch (e) {
       console.error(e)
+      setIdeas([])
       setLoading(false)
     }
   }
