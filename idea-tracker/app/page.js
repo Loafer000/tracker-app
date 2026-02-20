@@ -246,7 +246,7 @@ export default function Home() {
               <IdeaCard
                 key={idea._id}
                 idea={idea}
-                isEditing={editingId === idea.id}
+                isEditing={editingId === idea._id}
                 editData={editData}
                 setEditData={setEditData}
                 onEdit={handleEdit}
@@ -274,7 +274,7 @@ function IdeaCard({ idea, isEditing, editData, setEditData, onEdit, onSave, onCa
   const handleAddComment = (e) => {
     e?.preventDefault()
     if (commentPerson && commentText.trim()) {
-      onAddComment(idea.id, commentPerson, commentText)
+      onAddComment(idea._id, commentPerson, commentText)
       setCommentText('')
       setCommentPerson('')
     }
@@ -305,7 +305,7 @@ function IdeaCard({ idea, isEditing, editData, setEditData, onEdit, onSave, onCa
             onChange={(e) => setEditData({...editData, description: e.target.value})}
           />
           <div className="action-buttons">
-            <button onClick={() => onSave(idea.id)} className="btn btn-primary btn-small">Save</button>
+            <button onClick={() => onSave(idea._id)} className="btn btn-primary btn-small">Save</button>
             <button onClick={onCancel} className="btn btn-secondary btn-small">Cancel</button>
           </div>
         </div>
@@ -314,8 +314,8 @@ function IdeaCard({ idea, isEditing, editData, setEditData, onEdit, onSave, onCa
           <h3 className="idea-title">{idea.title}</h3>
           <p className="idea-description">{idea.description}</p>
           <div className="action-buttons">
-            <button onClick={() => onEdit(idea.id)} className="btn btn-primary btn-small">Edit</button>
-            <button onClick={() => onDelete(idea.id)} className="btn btn-secondary btn-small">Delete</button>
+            <button onClick={() => onEdit(idea._id)} className="btn btn-primary btn-small">Edit</button>
+            <button onClick={() => onDelete(idea._id)} className="btn btn-secondary btn-small">Delete</button>
           </div>
         </>
       )}
@@ -334,7 +334,7 @@ function IdeaCard({ idea, isEditing, editData, setEditData, onEdit, onSave, onCa
                   style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '2px solid #e0e0e0', marginBottom: '8px' }}
                 />
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={() => { onEditComment(idea.id, idx, editCommentText); setEditingCommentIdx(null); }} className="btn btn-primary btn-small">Save</button>
+                  <button onClick={() => { onEditComment(idea._id, idx, editCommentText); setEditingCommentIdx(null); }} className="btn btn-primary btn-small">Save</button>
                   <button onClick={() => setEditingCommentIdx(null)} className="btn btn-secondary btn-small">Cancel</button>
                 </div>
               </div>
@@ -344,7 +344,7 @@ function IdeaCard({ idea, isEditing, editData, setEditData, onEdit, onSave, onCa
                   <div className="comment-author">{comment.person}</div>
                   <div className="comment-actions">
                     <button onClick={() => { setEditingCommentIdx(idx); setEditCommentText(comment.text); }} className="comment-btn" title="Edit">Edit</button>
-                    <button onClick={() => onDeleteComment(idea.id, idx)} className="comment-btn comment-btn-delete" title="Delete">Delete</button>
+                    <button onClick={() => onDeleteComment(idea._id, idx)} className="comment-btn comment-btn-delete" title="Delete">Delete</button>
                   </div>
                 </div>
                 <div className="comment-text">{comment.text}</div>
