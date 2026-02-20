@@ -57,14 +57,18 @@ export default function Home() {
       comments: []
     }
 
-    await fetch('/api/ideas', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newIdea)
-    })
-
-    setFormData({ person: '', title: '', description: '' })
-    fetchIdeas()
+    try {
+      await fetch('/api/ideas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newIdea)
+      })
+      setFormData({ person: '', title: '', description: '' })
+      await fetchIdeas()
+    } catch (e) {
+      console.error(e)
+      alert('Failed to submit idea')
+    }
   }
 
   const handleEdit = (id) => {
