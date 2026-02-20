@@ -9,17 +9,25 @@ export default function Home() {
   const [formData, setFormData] = useState({ person: '', title: '', description: '' })
   const [editingId, setEditingId] = useState(null)
   const [editData, setEditData] = useState({ title: '', description: '' })
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const stored = localStorage.getItem('ideas')
-    if (stored) setIdeas(JSON.parse(stored))
+    fetchIdeas()
+    const interval = setInterval(fetchIdeas, 5000)
+    return () => clearInterval(interval)
   }, [])
 
-  useEffect(() => {
-    if (ideas.length > 0) {
-      localStorage.setItem('ideas', JSON.stringify(ideas))
+  const fetchIdeas = async () => {
+    try {
+      const res = await fetch('/api/ideas')
+      const data = await res.json()
+      setIdeas(data)
+      setLoading(false)
+    } catch (e) {
+      console.error(e)
+      setLoading(false)
     }
-  }, [ideas])
+  }
 
   const getTodayString = () => new Date().toISOString().split('T')[0]
 
@@ -28,7 +36,7 @@ export default function Home() {
     return ideas.some(idea => idea.person === person && idea.date === today)
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!formData.person || !formData.title || !formData.description) return
 
@@ -38,69 +46,103 @@ export default function Home() {
     }
 
     const newIdea = {
-      id: Date.now(),
+      _id: Date.now().toString(),
       ...formData,
       date: getTodayString(),
       comments: []
     }
 
-    setIdeas([newIdea, ...ideas])
+    await fetch('/api/ideas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newIdea)
+    })
+
     setFormData({ person: '', title: '', description: '' })
+    fetchIdeas()
   }
 
   const handleEdit = (id) => {
-    const idea = ideas.find(i => i.id === id)
+    const idea = ideas.find(i => i._id === id)
     setEditingId(id)
     setEditData({ title: idea.title, description: idea.description })
   }
 
-  const saveEdit = (id) => {
-    setIdeas(ideas.map(idea => 
-      idea.id === id ? { ...idea, ...editData } : idea
-    ))
+  const saveEdit = async (id) => {
+    const idea = ideas.find(i => i._id === id)
+    await fetch('/api/ideas', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...idea, ...editData })
+    })
     setEditingId(null)
+    fetchIdeas()
   }
 
-  const addComment = (ideaId, person, text) => {
+  const addComment = async (ideaId, person, text) => {
     if (!text.trim() || !person) return
-    const updatedIdeas = ideas.map(idea =>
-      idea.id === ideaId
-        ? { ...idea, comments: [...(idea.comments || []), { person, text, timestamp: Date.now() }] }
-        : idea
-    )
-    setIdeas(updatedIdeas)
-    localStorage.setItem('ideas', JSON.stringify(updatedIdeas))
+    const idea = ideas.find(i => i._id === ideaId)
+    const updatedIdea = {
+      ...idea,
+      comments: [...(idea.comments || []), { person, text, timestamp: Date.now() }]
+    }
+    await fetch('/api/ideas', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedIdea)
+    })
+    fetchIdeas()
   }
 
-  const editComment = (ideaId, commentIndex, newText) => {
-    const updatedIdeas = ideas.map(idea =>
-      idea.id === ideaId
-        ? { ...idea, comments: idea.comments.map((c, i) => i === commentIndex ? { ...c, text: newText } : c) }
-        : idea
-    )
-    setIdeas(updatedIdeas)
-    localStorage.setItem('ideas', JSON.stringify(updatedIdeas))
+  const editComment = async (ideaId, commentIndex, newText) => {
+    const idea = ideas.find(i => i._id === ideaId)
+    const updatedIdea = {
+      ...idea,
+      comments: idea.comments.map((c, i) => i === commentIndex ? { ...c, text: newText } : c)
+    }
+    await fetch('/api/ideas', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedIdea)
+    })
+    fetchIdeas()
   }
 
-  const deleteComment = (ideaId, commentIndex) => {
+  const deleteComment = async (ideaId, commentIndex) => {
     if (confirm('Delete this comment?')) {
-      const updatedIdeas = ideas.map(idea =>
-        idea.id === ideaId
-          ? { ...idea, comments: idea.comments.filter((_, i) => i !== commentIndex) }
-          : idea
-      )
-      setIdeas(updatedIdeas)
-      localStorage.setItem('ideas', JSON.stringify(updatedIdeas))
+      const idea = ideas.find(i => i._id === ideaId)
+      const updatedIdea = {
+        ...idea,
+        comments: idea.comments.filter((_, i) => i !== commentIndex)
+      }
+      await fetch('/api/ideas', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedIdea)
+      })
+      fetchIdeas()
     }
   }
 
-  const deleteIdea = (id) => {
+  const deleteIdea = async (id) => {
     if (confirm('Delete this idea?')) {
-      setIdeas(ideas.filter(idea => idea.id !== id))
+      await fetch(`/api/ideas?id=${id}`, { method: 'DELETE' })
+      fetchIdeas()
     }
   }
 
   const todaySubmissions = PEOPLE.filter(hasSubmittedToday)
+
+  if (loading) {
+    return (
+      <div className="container">
+        <div className="header">
+          <h1>💡 Startup Idea Tracker</h1>
+          <p>Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container">
@@ -170,7 +212,7 @@ export default function Home() {
           <div className="ideas-grid">
             {ideas.map(idea => (
               <IdeaCard
-                key={idea.id}
+                key={idea._id}
                 idea={idea}
                 isEditing={editingId === idea.id}
                 editData={editData}
