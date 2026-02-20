@@ -79,13 +79,19 @@ export default function Home() {
 
   const saveEdit = async (id) => {
     const idea = ideas.find(i => i._id === id)
-    await fetch('/api/ideas', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...idea, ...editData })
-    })
-    setEditingId(null)
-    fetchIdeas()
+    const updatedIdea = { ...idea, ...editData }
+    try {
+      await fetch('/api/ideas', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedIdea)
+      })
+      setEditingId(null)
+      await fetchIdeas()
+    } catch (e) {
+      console.error(e)
+      alert('Failed to save')
+    }
   }
 
   const addComment = async (ideaId, person, text) => {
@@ -95,12 +101,16 @@ export default function Home() {
       ...idea,
       comments: [...(idea.comments || []), { person, text, timestamp: Date.now() }]
     }
-    await fetch('/api/ideas', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedIdea)
-    })
-    fetchIdeas()
+    try {
+      await fetch('/api/ideas', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedIdea)
+      })
+      await fetchIdeas()
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   const editComment = async (ideaId, commentIndex, newText) => {
@@ -109,12 +119,16 @@ export default function Home() {
       ...idea,
       comments: idea.comments.map((c, i) => i === commentIndex ? { ...c, text: newText } : c)
     }
-    await fetch('/api/ideas', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedIdea)
-    })
-    fetchIdeas()
+    try {
+      await fetch('/api/ideas', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedIdea)
+      })
+      await fetchIdeas()
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   const deleteComment = async (ideaId, commentIndex) => {
@@ -124,19 +138,28 @@ export default function Home() {
         ...idea,
         comments: idea.comments.filter((_, i) => i !== commentIndex)
       }
-      await fetch('/api/ideas', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedIdea)
-      })
-      fetchIdeas()
+      try {
+        await fetch('/api/ideas', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedIdea)
+        })
+        await fetchIdeas()
+      } catch (e) {
+        console.error(e)
+      }
     }
   }
 
   const deleteIdea = async (id) => {
     if (confirm('Delete this idea?')) {
-      await fetch(`/api/ideas?id=${id}`, { method: 'DELETE' })
-      fetchIdeas()
+      try {
+        await fetch(`/api/ideas?id=${id}`, { method: 'DELETE' })
+        await fetchIdeas()
+      } catch (e) {
+        console.error(e)
+        alert('Failed to delete')
+      }
     }
   }
 

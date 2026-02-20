@@ -30,8 +30,8 @@ export async function PUT(request) {
     const db = client.db('ideaTracker')
     const body = await request.json()
     const { _id, ...updateData } = body
-    await db.collection('ideas').updateOne({ _id }, { $set: updateData })
-    return NextResponse.json({ success: true })
+    const result = await db.collection('ideas').replaceOne({ _id }, { _id, ...updateData })
+    return NextResponse.json({ success: true, modified: result.modifiedCount })
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
@@ -43,8 +43,8 @@ export async function DELETE(request) {
     const db = client.db('ideaTracker')
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
-    await db.collection('ideas').deleteOne({ _id: id })
-    return NextResponse.json({ success: true })
+    const result = await db.collection('ideas').deleteOne({ _id: id })
+    return NextResponse.json({ success: true, deleted: result.deletedCount })
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
